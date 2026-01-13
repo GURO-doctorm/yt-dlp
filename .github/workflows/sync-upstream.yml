@@ -1,0 +1,38 @@
+name: Auto Sync from yt-dlp Upstream
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   
+  workflow_dispatch:      
+
+permissions:
+  contents: write       
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/yt-dlp/yt-dlp.git || true
+
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Checkout master and merge upstream
+        run: |
+          git checkout master
+          git merge upstream/master --no-edit --no-ff || echo "Merge conflict - needs manual fix"
+          git push origin master
+
+      - name: Show last commit after sync
+        run: git log -1 --pretty=%B
